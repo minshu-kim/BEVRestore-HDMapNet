@@ -7,7 +7,7 @@ from tensorboardX import SummaryWriter
 import argparse
 
 import torch
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from loss import SimpleLoss, DiscriminativeLoss
 
 from data.dataset import semantic_dataset
@@ -41,6 +41,17 @@ def train(args):
     data_conf = {
         'num_channels': NUM_CLASSES + 1,
         'image_size': args.image_size,
+        'xbound': [-30.0, 30.0, 0.15],
+        'ybound': [-15.0, 15.0, 0.15],
+        'zbound': args.zbound,
+        'dbound': args.dbound,
+        'thickness': args.thickness,
+        'angle_class': args.angle_class,
+    }
+
+    tnn_conf = {
+        'num_channels': NUM_CLASSES + 1,
+        'image_size': args.image_size,
         'xbound': args.xbound,
         'ybound': args.ybound,
         'zbound': args.zbound,
@@ -49,20 +60,27 @@ def train(args):
         'angle_class': args.angle_class,
     }
 
-    train_loader, val_loader = semantic_dataset(args.version, args.dataroot, data_conf, args.bsz, args.nworkers)
-    model = get_model(args.model, data_conf, args.instance_seg, args.embedding_dim, args.direction_pred, args.angle_class)
-
     if args.finetune:
-        model.load_state_dict(torch.load(args.modelf), strict=False)
+        train_loader, val_loader = semantic_dataset(args.version, args.dataroot, data_conf, args.bsz, args.nworkers)
+    else:
+        train_loader, val_loader = semantic_dataset(args.version, args.dataroot, tnn_conf, args.bsz, args.nworkers)
+    model = get_model(args.model, tnn_conf, args.instance_seg, args.embedding_dim, args.direction_pred, args.angle_class, finetune=args.finetune)
+
+    if args.finetune or args.modelf is not None:
+        model.load_state_dict(torch.load(args.modelf), strict=True)
         for name, param in model.named_parameters():
-            if 'bevencode.up' in name or 'bevencode.layer3' in name:
+            if 'bevencode' in name:
                 param.requires_grad = True
             else:
                 param.requires_grad = False
+
     model.cuda()
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    sched = StepLR(opt, 10, 0.1)
+    if not args.finetune:
+        sched = StepLR(opt, 10, 0.1)
+    else:
+        sched = CosineAnnealingLR(opt, args.nepochs, eta_min=args.lr*1e-3)
     writer = SummaryWriter(logdir=args.logdir)
 
     loss_fn = SimpleLoss(args.pos_weight).cuda()
@@ -112,12 +130,13 @@ def train(args):
             if counter % 10 == 0:
                 intersects, union = get_batch_iou(onehot_encoding(semantic), semantic_gt)
                 iou = intersects / (union + 1e-7)
-                logger.info(f"TRAIN[{epoch:>3d}]: [{batchi:>4d}/{last_idx}]    "
-                            f"Time: {t1-t0:>7.4f}, "
-                            f"Loss: {final_loss.item():>7.4f}, "
-                            f"Var Loss: {var_loss.item():>7.4f}, "
-                            f"Dist Loss: {dist_loss.item():>7.4f}, "
-                            f"DiR Loss: {direction_loss.item():>7.4f}, "
+                logger.info(f"TRAIN[{epoch:>3d}]: [{batchi:>4d}/{last_idx}] "
+                            f"Time: {t1-t0:>7.2f} "
+                            f"Loss: {final_loss.item():>7.3f} "
+                            f"seg: {seg_loss.item():>7.3f} "
+                            f"var: {var_loss.item():>7.3f} "
+                            f"dist: {dist_loss.item():>7.3f} "
+                            f"dir: {direction_loss.item():>7.3f} "
                             f"IOU: {np.array2string(iou[1:].numpy(), precision=3, floatmode='fixed')}")
 
                 write_log(writer, iou, 'train', counter)
@@ -139,7 +158,6 @@ def train(args):
         torch.save(model.state_dict(), model_name)
         logger.info(f"{model_name} saved")
         model.train()
-
         sched.step()
 
 
@@ -160,7 +178,7 @@ if __name__ == '__main__':
     parser.add_argument("--max_grad_norm", type=float, default=5.0)
     parser.add_argument("--pos_weight", type=float, default=2.13)
     parser.add_argument("--bsz", type=int, default=4)
-    parser.add_argument("--nworkers", type=int, default=10)
+    parser.add_argument("--nworkers", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--weight_decay", type=float, default=1e-7)
 
@@ -171,8 +189,8 @@ if __name__ == '__main__':
     # data config
     parser.add_argument("--thickness", type=int, default=5)
     parser.add_argument("--image_size", nargs=2, type=int, default=[128, 352])
-    parser.add_argument("--xbound", nargs=3, type=float, default=[-30.0, 30.0, 0.15])
-    parser.add_argument("--ybound", nargs=3, type=float, default=[-15.0, 15.0, 0.15])
+    parser.add_argument("--xbound", nargs=3, type=float, default=[-31.2, 31.2, 0.60])
+    parser.add_argument("--ybound", nargs=3, type=float, default=[-16.8, 16.8, 0.60])
     parser.add_argument("--zbound", nargs=3, type=float, default=[-10.0, 10.0, 20.0])
     parser.add_argument("--dbound", nargs=3, type=float, default=[4.0, 45.0, 1.0])
 

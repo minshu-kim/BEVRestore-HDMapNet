@@ -85,7 +85,6 @@ class BevEncode(nn.Module):
         )
         # BEV SR 1.2m/px to 0.15m/>
         self.seg_sr_ = make_edsr_baseline(in_ch=128, out_ch=128, n_feats=512, scale=4, no_upsampling=False)
-        #self.seg_decoder = nn.Conv2d(128, outC, kernel_size=1, padding=0)
         self.seg_decoder = nn.Sequential(
             nn.Conv2d(128, 128, kernel_size=1, padding=0),
             nn.ReLU(True),
@@ -107,15 +106,6 @@ class BevEncode(nn.Module):
             )
             self.embed_sr_ = make_edsr_baseline(in_ch=128, out_ch=128, n_feats=512, scale=4, no_upsampling=False)
             self.embed_decoder = nn.Conv2d(128, embedded_dim, kernel_size=1, padding=0)
-            #self.embed_encoder = make_edsr_baseline(in_ch=128, out_ch=128, no_upsampling=True, n_resblocks=4)
-            #self.embed_decoder = nn.Sequential(
-            #    nn.Conv2d(128, 128, kernel_size=1, padding=0),
-            #    nn.ReLU(True),
-            #    nn.Conv2d(128, 128, kernel_size=1, padding=0),
-            #    nn.ReLU(True),
-            #    nn.Conv2d(128, 128, kernel_size=1, padding=0),
-            #    nn.ReLU(True),
-            #    nn.Conv2d(128, embedded_dim, kernel_size=1, padding=0))
 
         self.direction_pred = direction_pred
         if direction_pred:
@@ -129,17 +119,6 @@ class BevEncode(nn.Module):
             )
             self.direction_sr_ = make_edsr_baseline(in_ch=128, out_ch=128, n_feats=512, scale=4, no_upsampling=False)
             self.direction_decoder = nn.Conv2d(128, direction_dim, kernel_size=1, padding=0)
-            """
-            self.direction_encoder = make_edsr_baseline(in_ch=128, out_ch=128, n_feats=512, no_upsampling=True, n_resblocks=4)
-            self.direction_decoder = nn.Sequential(
-                nn.Conv2d(128, 128, kernel_size=1, padding=0),
-                nn.ReLU(True),
-                nn.Conv2d(128, 128, kernel_size=1, padding=0),
-                nn.ReLU(True),
-                nn.Conv2d(128, 128, kernel_size=1, padding=0),
-                nn.ReLU(True),
-                nn.Conv2d(128, direction_dim, kernel_size=1, padding=0))
-            """
 
         coords = []
         for (imin, imax, _), (omin, omax, ostep) in zip( # BEV Crop at 0.6m/px scale
@@ -180,7 +159,6 @@ class BevEncode(nn.Module):
         x = self.seg_decoder(x_)
 
         if self.instance_seg:
-            #x_embedded = self.embed_decoder(x_)
             x_embedded = self.up1_embedded(x2, x1)
             x_embedded = self.up2_embedded(x_embedded)
             if self.finetune:
@@ -196,10 +174,7 @@ class BevEncode(nn.Module):
             x_embedded = None
 
         if self.direction_pred:
-            #x_direction = self.direction_encoder(x_)
-            #x_direction = self.direction_decoder(x_direction)
             x_direction = self.up1_embedded(x2, x1)
-            #x_direction = self.up1_direction(x2, x1)
             x_direction = self.up2_direction(x_direction)
             if self.finetune:
                 x_direction = F.grid_sample(
@@ -209,7 +184,6 @@ class BevEncode(nn.Module):
                     align_corners=False,
                 )
                 x_direction = self.direction_sr_(x_direction)
-                #x_direction = self.direction_encoder(x_)
             x_direction = self.direction_decoder(x_direction)
         else:
             x_direction = None

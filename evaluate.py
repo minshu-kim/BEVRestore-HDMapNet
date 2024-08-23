@@ -57,12 +57,11 @@ def main(args):
         'angle_class': args.angle_class,
     }
 
-    finetune=True
-    if finetune:
+    if args.finetune:
         train_loader, val_loader = semantic_dataset(args.version, args.dataroot, data_conf, args.bsz, args.nworkers)
     else:
         train_loader, val_loader = semantic_dataset(args.version, args.dataroot, tnn_conf, args.bsz, args.nworkers)
-    model = get_model(args.model, tnn_conf, args.instance_seg, args.embedding_dim, args.direction_pred, args.angle_class, finetune=finetune)
+    model = get_model(args.model, tnn_conf, args.instance_seg, args.embedding_dim, args.direction_pred, args.angle_class, finetune=args.finetune)
     model.load_state_dict(torch.load(args.modelf), strict=False)
     model.cuda()
     print(eval_iou(model, val_loader))

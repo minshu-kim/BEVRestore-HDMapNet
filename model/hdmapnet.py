@@ -42,9 +42,6 @@ class ViewTransformation(nn.Module):
 class HDMapNet(nn.Module):
     def __init__(self, data_conf, instance_seg=True, embedded_dim=16, direction_pred=True, direction_dim=36, lidar=False, finetune=False):
         super(HDMapNet, self).__init__()
-        self.i = 0
-        self.stack = 0
-
         self.camC = 64
         self.downsample = 16
 
@@ -61,7 +58,6 @@ class HDMapNet(nn.Module):
         ipm_ybound = [-res_x/2, res_x/2, 2*res_x/final_H]
         self.ipm = IPM(ipm_xbound, ipm_ybound, N=6, C=self.camC, extrinsic=True)
         self.up_sampler = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-        # self.up_sampler = nn.Upsample(scale_factor=5, mode='bilinear', align_corners=True)
         self.finetune = finetune
 
         self.lidar = lidar
@@ -93,13 +89,6 @@ class HDMapNet(nn.Module):
         return x
 
     def forward(self, img, trans, rots, intrins, post_trans, post_rots, lidar_data, lidar_mask, car_trans, yaw_pitch_roll):
-        if self.i > 100:
-            torch.cuda.synchronize()
-            st = time.time()
-
-        #torch.cuda.reset_peak_memory_stats(device=None)
-        #torch.cuda.empty_cache()
-
         x = self.get_cam_feats(img)
         x = self.view_fusion(x)
         Ks, RTs, post_RTs = self.get_Ks_RTs_and_post_RTs(intrins, rots, trans, post_rots, post_trans)
@@ -112,18 +101,5 @@ class HDMapNet(nn.Module):
             topdown = torch.cat([topdown, lidar_feature], dim=1)
 
         ret = self.bevencode(topdown)
-        #torch.cuda.empty_cache()
-        #cur_memory = torch.cuda.memory_allocated()
-        #memory = torch.cuda.max_memory_allocated()
-        #print(f"\nBackbone: {(cur_memory)/1024**3:.1f}GB")
-        #print(f"Max Backbone: {(memory)/1024**3:.1f}GB")
-
-        if self.i > 100:
-            torch.cuda.synchronize()
-            self.stack += (time.time()-st)
-
-        self.i += 1
-        if self.i > 101:
-           print(f"Latency: {self.stack/(self.i-101)*1000:.1f}ms")
 
         return ret
