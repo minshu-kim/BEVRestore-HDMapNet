@@ -94,8 +94,8 @@ We measured training memory containing tensor cache and inference time latency w
 
 | model                      | BEVRestore | Latency | Memory   | mAP | mIoU       |weight |
 | -------------------------- | :-------------: | :-------------: | :----------: | :----------: | :----------: |---------- |
-| HDMapNet |           | 38ms        | 1.9GB      | 23.0 | 34.2     |[model](https://drive.google.com/file/d/1Fn9ErCrWheNFfnCK3EZ1VmCPceUTxS5G/view?usp=share_link)|
-| HDMapNet-BEVRestore |     V      | 58ms         | 3.5GB | 32.1     | 36.4     |[model](https://drive.google.com/file/d/1pNBIRXZl1ZbhupdWAfTGngbOnV_4qIn7/view?usp=share_link)|
+| HDMapNet |           | 38ms        | 1.9GB      | 23.0 | 34.2     |[model](https://drive.google.com/file/d/14UacCCDadgA3L2BRUu62c4XuV7ppXYBd/view?usp=sharing)|
+| HDMapNet-BEVRestore |     V      | 58ms         | 3.5GB | 32.1     | 36.4     |[LR](https://drive.google.com/file/d/1WsIigx9nylSms0KDhUdqejNGtxdjRqFs/view?usp=sharing) / [HR](https://drive.google.com/file/d/1n5rPKPsmYgXhiRIGrCVZSvhVPP-FnI3Z/view?usp=sharing)|
 
 # Acknowledgement
 This project is built on the top of the implementation of [HDMapNet]([https://github.com/Bin-ze/BEVFormer_segmentation_detection](https://github.com/Tsinghua-MARS-Lab/HDMapNet)). We thank them for their solid implementation.
