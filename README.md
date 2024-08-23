@@ -1,4 +1,4 @@
-# HDMapNet
+# Plugging BEVRestore into HDMapNet
 
 **HDMapNet: An Online HD Map Construction and Evaluation Framework**
 
@@ -86,19 +86,16 @@ rasterized_submisson {
 ```
 
 Run `python export_gt_to_json.py` to get a demo of vectorized submission. Run `python export_gt_to_json.py --raster` for rasterized submission.
-
 Run `python export_pred_to_json.py --modelf [checkpoint]` to get submission file for trained model.
 
-### Citation
-If you found this paper or codebase useful, please cite our paper:
-```
-@misc{li2021hdmapnet,
-      title={HDMapNet: An Online HD Map Construction and Evaluation Framework}, 
-      author={Qi Li and Yue Wang and Yilun Wang and Hang Zhao},
-      year={2021},
-      eprint={2107.06307},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
-}
-```
-# BEVRestore-HDMapNet
+# Model
+
+We measured training memory containing tensor cache and inference time latency with a single batch.
+
+| model                      | BEVRestore | Latency | Memory   | mAP | mIoU       |weight |
+| -------------------------- | :-------------: | :-------------: | :----------: | :----------: | :----------: |---------- |
+| HDMapNet |           | 38ms        | 1.9GB      | 23.0 | 34.2     |[model](https://drive.google.com/file/d/1Fn9ErCrWheNFfnCK3EZ1VmCPceUTxS5G/view?usp=share_link)|
+| HDMapNet-BEVRestore |     V      | 58ms         | 3.5GB | 32.1     | 36.4     |[model](https://drive.google.com/file/d/1pNBIRXZl1ZbhupdWAfTGngbOnV_4qIn7/view?usp=share_link)|
+
+# Acknowledgement
+This project is built on the top of the implementation of [HDMapNet]([https://github.com/Bin-ze/BEVFormer_segmentation_detection](https://github.com/Tsinghua-MARS-Lab/HDMapNet)). We thank them for their solid implementation.
