@@ -92,7 +92,7 @@ Run `python export_pred_to_json.py --modelf [checkpoint]` to get submission file
 
 We measured training memory containing tensor cache and inference time latency with a single batch.
 
-| model                      | BEVRestore | Latency | Memory   | mAP | mIoU       |weight |
+| model                      | X4 BEVRestore | Latency | Memory   | mAP | mIoU       |weight |
 | -------------------------- | :-------------: | :-------------: | :----------: | :----------: | :----------: |---------- |
 | HDMapNet |           | 38ms        | 1.9GB      | 23.0 | 34.2     |[model](https://drive.google.com/file/d/14UacCCDadgA3L2BRUu62c4XuV7ppXYBd/view?usp=sharing)|
 | HDMapNet-BEVRestore |     V      | 58ms         | 3.5GB | 32.1     | 36.4     |[LR](https://drive.google.com/file/d/1WsIigx9nylSms0KDhUdqejNGtxdjRqFs/view?usp=sharing) / [HR](https://drive.google.com/file/d/1n5rPKPsmYgXhiRIGrCVZSvhVPP-FnI3Z/view?usp=sharing)|
